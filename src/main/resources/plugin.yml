@@ -1,0 +1,11 @@
+name: CamrigTest
+version: '${project.version}'
+main: de.littleprogrammer.camrig.Main
+api-version: 1.17
+authors: [ LittleProgrammer ]
+description: Testing for camera Movement in MC
+website: lpmc.me
+commands:
+  startCam:
+  pos1:
+  pos2:
