@@ -10,6 +10,10 @@ import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 public final class Main extends JavaPlugin {
 
     private static Main instance;
@@ -18,6 +22,8 @@ public final class Main extends JavaPlugin {
     private Location pos2;
 
     private int duration;
+
+    private List<UUID> playersInCam = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -66,5 +72,13 @@ public final class Main extends JavaPlugin {
 
     public void setDuration(int duration) {
         this.duration = duration;
+    }
+
+    public List<UUID> getPlayersInCam() {
+        return playersInCam;
+    }
+
+    public void setPlayersInCam(List<UUID> playersInCam) {
+        this.playersInCam = playersInCam;
     }
 }

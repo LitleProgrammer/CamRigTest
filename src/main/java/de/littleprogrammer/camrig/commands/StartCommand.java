@@ -23,7 +23,8 @@ public class StartCommand implements CommandExecutor {
         }
 
         Main.getInstance().setDuration(Integer.valueOf(args[0]));
-        camHandler = new CamHandler((Player) sender);
+        camHandler = new CamHandler();
+        camHandler.CamHandler((Player) sender);
         //startCam = new StartCam((Player) sender);
 
         return false;

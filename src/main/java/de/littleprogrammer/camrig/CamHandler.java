@@ -27,12 +27,10 @@ public class CamHandler {
     private int taskId;
     private int tick = 0;
 
-    private List<Location> cameraPathPoints = new ArrayList<>();
-
     private GameMode playerStartGamemode;
 
 
-    public  CamHandler(Player player) {
+    public void  CamHandler(Player player) {
 
         if (Main.getInstance().getPos1() == null || Main.getInstance().getPos2() == null || Main.getInstance().getDuration() <= 0) {
             player.sendMessage(ChatColor.RED + "Please set a pos1 and a pos2 first! And Provide a duration");
@@ -54,19 +52,6 @@ public class CamHandler {
         //Making a new Vector containing the movement amount for one step
         vecStep = new Vector((vec2.getX() - vec1.getX()) / steps, (vec2.getY() - vec1.getY()) / steps, (vec2.getZ() - vec1.getZ()) / steps);
 
-        cameraPathPoints.clear();
-
-        //Filling the list with all positions
-        for (int i = 0; i < steps; i++) {
-            if (i == 0) {
-                cameraPathPoints.add(pos1);
-                System.out.println("Set first pos: " + pos1.toString());
-            }else {
-                Location prevPos = cameraPathPoints.get(i - 1);
-                cameraPathPoints.add(prevPos.add(vecStep));
-                System.out.println("Added pos: ");
-            }
-        }
 
         //Running start method
         start(player);
@@ -85,24 +70,24 @@ public class CamHandler {
 
         player.setGameMode(GameMode.SPECTATOR);
 
+        Main.getInstance().getPlayersInCam().add(player.getUniqueId());
+
+        //Teleporting the player to the start position
         player.teleport(pos1);
 
-
+        //Moving the player
         taskId = Bukkit.getScheduler().runTaskTimer(Main.getInstance(), new Runnable() {
             @Override
             public void run() {
 
-                if (tick >= cameraPathPoints.size() ) {
-                    stop(player);
+                if (tick >= steps) {
                     Bukkit.getScheduler().cancelTask(taskId);
+                }else {
+                    Vector currentVec = player.getLocation().toVector();
+                    Vector nextVec = currentVec.add(vecStep);
+
+                    player.setVelocity(nextVec);
                 }
-
-                Location currentLoc = cameraPathPoints.get(tick);
-                Location nextLoc = cameraPathPoints.get((tick + 1));
-
-                player.setVelocity(velocityCalculator(currentLoc, nextLoc));
-
-                tick ++;
 
 
             }
