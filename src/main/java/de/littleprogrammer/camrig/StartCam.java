@@ -7,14 +7,28 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 public class StartCam {
     private Location pos1;
     private Location pos2;
 
-    private int steps = 100;
+    private Vector vector1;
+    private Vector vector2;
+
+    int singleFrameDurationMs = 50;
+
+    private int steps;
+
+    private int duration;
 
     private Location step;
+    private Vector stepVector;
+
+    private double stepVectorX;
+    private double stepVectorY;
+    private double stepVectorZ;
+
 
     public StartCam(Player player){
 
@@ -26,14 +40,29 @@ public class StartCam {
         }else {
             pos1 = Main.getInstance().getPos1();
             pos2 = Main.getInstance().getPos2();
+
+            vector1 = pos1.toVector();
+            vector2 = pos2.toVector();
+
+            duration = Main.getInstance().getDuration();
         }
-        player.sendMessage(player.getAddress().getAddress().toString());
+        //player.sendMessage(player.getAddress().getAddress().toString());
+
+        steps = (duration * 1000) / singleFrameDurationMs;
 
         step = new Location(player.getWorld(), 1, 1, 1, 1, 1);
 
-        step.setX((pos2.getX() - pos1.getX()) / steps);
+        stepVectorX = (vector2.getX() - vector1.getX()) / steps;
+        stepVectorY = (vector2.getY() - vector1.getY()) / steps;
+        stepVectorZ = (vector2.getZ() - vector1.getZ()) / steps;
+
+        stepVector = new Vector(stepVectorX, stepVectorY, stepVectorZ);
+
+        System.out.println("StepVector: " + stepVector.toString() + " Vector1: " + vector1.toString() + " Vector2: " + vector2.toString());
+
+        /*step.setX((pos2.getX() - pos1.getX()) / steps);
         step.setY((pos2.getY() - pos1.getY()) / steps);
-        step.setZ((pos2.getZ() - pos1.getZ()) / steps);
+        step.setZ((pos2.getZ() - pos1.getZ()) / steps);*/
         step.setYaw((pos2.getYaw() - pos1.getYaw()) / steps);
         step.setPitch((pos2.getPitch() - pos1.getPitch()) / steps);
 
@@ -48,7 +77,8 @@ public class StartCam {
         camrig.setGlowing(true);
         camrig.setRemoveWhenFarAway(true);
 
-        player.setSpectatorTarget(camrig);
+        //player.setSpectatorTarget(camrig);
+        player.teleport(pos1);
 
         CamPath(player, camrig);
     }
@@ -62,8 +92,16 @@ public class StartCam {
                     camrig.remove();
                     player.setGameMode(GameMode.CREATIVE);
                 }
-                camrig.teleport(camrig.getLocation().add(step));
-                camrig.setRotation(camrig.getLocation().getYaw() + step.getYaw(), camrig.getLocation().getPitch() + step.getPitch());
+                //camrig.teleport(camrig.getLocation().add(step));
+                player.setVelocity(stepVector);
+                player.getLocation().setYaw(player.getLocation().getYaw() + step.getYaw());
+                player.getLocation().setPitch(player.getLocation().getPitch() + step.getPitch());
+                float newYaw = player.getLocation().getYaw() + step.getYaw();
+                float newPitch = player.getLocation().getPitch() + step.getPitch();
+                Location yawPitchLoc = player.getLocation();
+                yawPitchLoc.setPitch(newPitch);
+                yawPitchLoc.setYaw(newYaw);
+                player.teleport(yawPitchLoc);
             }
         } ).runTaskTimer(Main.getInstance(), 1, 1);
 

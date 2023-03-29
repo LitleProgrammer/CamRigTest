@@ -9,3 +9,4 @@ commands:
   startCam:
   pos1:
   pos2:
+  vector:
