@@ -53,6 +53,8 @@ public class CamHandler {
         vecStep = new Vector((vec2.getX() - vec1.getX()) / steps, (vec2.getY() - vec1.getY()) / steps, (vec2.getZ() - vec1.getZ()) / steps);
 
 
+        System.out.println("VecSTep: " + vecStep.toString());
+
         //Running start method
         start(player);
 
@@ -81,25 +83,38 @@ public class CamHandler {
             public void run() {
 
                 if (tick >= steps) {
+                    player.teleport(pos2);
+                    stop(player);
                     Bukkit.getScheduler().cancelTask(taskId);
                 }else {
                     Vector currentVec = player.getLocation().toVector();
                     Vector nextVec = currentVec.add(vecStep);
 
-                    player.setVelocity(nextVec);
+                    player.setVelocity(vecStep);
+                    System.out.println("tick: " + tick + " von " + steps);
+                    tick++;
                 }
 
 
             }
-        }, 1L, 1L).getTaskId();
+        }, 1, 1).getTaskId();
 
     }
 
     public void stop(Player player) {
 
         //Setting player back to start pos and gamemode
-        player.teleport(playerStartPos);
-        player.setGameMode(playerStartGamemode);
+        if (playerStartPos != null) {
+            player.teleport(playerStartPos);
+        } else {
+            player.teleport(pos1);
+        }
+
+        if (playerStartGamemode != null) {
+            player.setGameMode(playerStartGamemode);
+        }
+
+
 
         Bukkit.getScheduler().cancelTask(taskId);
 
