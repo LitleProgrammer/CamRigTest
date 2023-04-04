@@ -27,6 +27,9 @@ public class CamHandler {
     private int taskId;
     private int tick = 0;
 
+    private float yawStep;
+    private float pitchStep;
+
     private GameMode playerStartGamemode;
 
 
@@ -51,6 +54,8 @@ public class CamHandler {
 
         //Making a new Vector containing the movement amount for one step
         vecStep = new Vector((vec2.getX() - vec1.getX()) / steps, (vec2.getY() - vec1.getY()) / steps, (vec2.getZ() - vec1.getZ()) / steps);
+        yawStep = (pos2.getYaw() - pos1.getYaw()) / steps;
+        pitchStep = (pos2.getPitch() - pos1.getPitch()) / steps;
 
 
         System.out.println("VecSTep: " + vecStep.toString());
@@ -83,12 +88,17 @@ public class CamHandler {
             public void run() {
 
                 if (tick >= steps) {
-                    player.teleport(pos2);
+                    player.setVelocity(new Vector(0, 0, 0));
                     stop(player);
                     Bukkit.getScheduler().cancelTask(taskId);
                 }else {
-                    Vector currentVec = player.getLocation().toVector();
-                    Vector nextVec = currentVec.add(vecStep);
+                    Location currentLoc = player.getLocation();
+
+                    Location nextLoc = currentLoc;
+                    nextLoc.setYaw(yawStep + currentLoc.getYaw());
+                    nextLoc.setPitch(pitchStep + currentLoc.getPitch());
+
+                    //Use Set Player Rotation packet
 
                     player.setVelocity(vecStep);
                     System.out.println("tick: " + tick + " von " + steps);
