@@ -28,6 +28,7 @@ public final class Main extends JavaPlugin {
     @Override
     public void onEnable() {
         // Plugin startup logic
+
         instance = this;
         getCommand("startCam").setExecutor(new StartCommand());
         getCommand("pos1").setExecutor(new Pos1Command());

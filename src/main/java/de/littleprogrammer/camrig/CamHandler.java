@@ -1,6 +1,5 @@
 package de.littleprogrammer.camrig;
 
-import com.sun.tools.javac.file.Locations;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -19,10 +18,11 @@ public class CamHandler {
     private Location playerStartPos;
     private Vector vec1;
     private Vector vec2;
+    private Vector diffVec;
     private Vector vecStep;
 
     private int duration;
-    private int frameDurationMs = 50;
+    private int frameDurationMs = 200;
     private int steps;
     private int taskId;
     private int tick = 0;
@@ -48,6 +48,8 @@ public class CamHandler {
         //Gets vectors from locations
         vec1 = pos1.toVector();
         vec2 = pos2.toVector();
+
+        diffVec = vec2.subtract(vec1);
 
         //calculating the amount of steps
         steps = (duration * 1000) / frameDurationMs;
@@ -98,9 +100,14 @@ public class CamHandler {
                     nextLoc.setYaw(yawStep + currentLoc.getYaw());
                     nextLoc.setPitch(pitchStep + currentLoc.getPitch());
 
-                    //Use Set Player Rotation packet
+                    player.teleport(nextLoc);
 
-                    player.setVelocity(vecStep);
+                    //Use Set Player Rotation packet
+                    //Boolean isGround = player.isOnGround();
+
+                    //((CraftPlayer) player).getHandle().connection.send(new ClientboundMoveEntityPacket.Rot(((CraftPlayer) player).getHandle().getId(), (byte) (yawStep * 256 / 360), (byte) (pitchStep * 256 / 360), isGround));
+
+                    player.setVelocity(diffVec);
                     System.out.println("tick: " + tick + " von " + steps);
                     tick++;
                 }
