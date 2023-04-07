@@ -45,7 +45,7 @@ public class CamPath {
         this.player = player;
         this.start = start;
         this.end = end;
-        this.durationInTicks = 5 /*duration * 20*/;
+        this.durationInTicks = duration * 20;
     }
 
 
@@ -63,18 +63,17 @@ public class CamPath {
 
 
         //Fills the list with locations (previous location + step location)
-        for (int i = 0; i <= durationInTicks; i++) {
-            if (i <= 0) {
-                pathLocations.add(start);
-                System.out.println("First loc set to list");
-            }else if(i > 1) {
-                Location prevLoc = pathLocations.get(i-2);
-                Location nextLoc = prevLoc.add(step);
+        pathLocations.add(start);
+        for (int i = 1; i <= durationInTicks; i++) {
+            Location prevLocation = pathLocations.get(i-1).clone();
+            Location nextlocation = prevLocation.add(step);
 
-                pathLocations.add(nextLoc);
-                System.out.println("Set to list: " + i + "/" + durationInTicks + " Step: " + step.toString());
-                System.out.println("Set at step " + i + ":" + nextLoc.toString() + "to list prev loc: " + pathLocations.get(i-1).toString());
-            }
+            float yaw = nextlocation.getYaw() + stepYaw;
+            float pitch = nextlocation.getPitch() + stepPitch;
+            nextlocation.setYaw(yaw);
+            nextlocation.setPitch(pitch);
+
+            pathLocations.add(nextlocation);
         }
 
 
@@ -84,7 +83,7 @@ public class CamPath {
 
     //This method actually makes the player move on the path by the predefined locations in the pathLocations list
     public void runPath() {
-        /*new BukkitRunnable() {
+        new BukkitRunnable() {
             @Override
             public void run() {
                 //If it's the first iteration of the runnable the player gets teleported to the start and given the first velocity
@@ -107,12 +106,12 @@ public class CamPath {
                 //Tick gets set one higher
                 tick ++;
             }
-        }.runTaskTimer(Main.getInstance(), 1, 1);*/
-        System.out.println(pathLocations.get(1).toString());
-        System.out.println(pathLocations.get(2).toString());
-        System.out.println(pathLocations.get(3).toString());
-        System.out.println(pathLocations.get(4).toString());
-        System.out.println(pathLocations.get(5).toString());
+        }.runTaskTimer(Main.getInstance(), 1, 1);
+        System.out.println(pathLocations.get(0));
+        System.out.println(pathLocations.get(1));
+        System.out.println(pathLocations.get(2));
+        System.out.println(pathLocations.get(3));
+        System.out.println(pathLocations.get(4));
     }
 
 
