@@ -19,6 +19,7 @@ package de.littleprogrammer.camrig;
  */
 
 
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -27,17 +28,28 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class CamPath {
 
+    //Locations
     private Player player;
     private Location start;
     private Location end;
     private Location step;
+    private Location playerBeforeLoc;
+
+    //Integers
     private int durationInTicks;
     private int tick = 0;
+    private int taskId;
 
+    //Lists
     private List<Location> pathLocations = new ArrayList<>();
+    private List<UUID> playersInCam = new ArrayList<>();
+
+    //Gamemodes
+    private GameMode playerBeforeGamemode;
 
 
     //The method gets values given on calling the class and makes the instances
@@ -76,6 +88,10 @@ public class CamPath {
             pathLocations.add(nextlocation);
         }
 
+        playerBeforeGamemode = player.getGameMode();
+        playerBeforeLoc = player.getLocation();
+        playersInCam.add(player.getUniqueId());
+
 
         runPath();
     }
@@ -83,7 +99,7 @@ public class CamPath {
 
     //This method actually makes the player move on the path by the predefined locations in the pathLocations list
     public void runPath() {
-        new BukkitRunnable() {
+         taskId =  new BukkitRunnable() {
             @Override
             public void run() {
                 //If it's the first iteration of the runnable the player gets teleported to the start and given the first velocity
@@ -98,6 +114,7 @@ public class CamPath {
                 } else if (tick >= durationInTicks) {
                     player.teleport(end);
                     cancel();
+                    stop(player);
                 } else if (tick > 0 && !(tick >= durationInTicks) && !(tick == pathLocations.size()-1)) {
                     player.teleport(pathLocations.get(tick));
                     Vector velocity = calculateVector(pathLocations.get(tick), pathLocations.get(tick+1));
@@ -106,12 +123,23 @@ public class CamPath {
                 //Tick gets set one higher
                 tick ++;
             }
-        }.runTaskTimer(Main.getInstance(), 1, 1);
-        System.out.println(pathLocations.get(0));
-        System.out.println(pathLocations.get(1));
-        System.out.println(pathLocations.get(2));
-        System.out.println(pathLocations.get(3));
-        System.out.println(pathLocations.get(4));
+        }.runTaskTimer(Main.getInstance(), 1, 1).getTaskId();
+    }
+
+
+    //Stopping everything and putting player back to the state where it started
+    public void stop(Player player) {
+        try {
+            Bukkit.getScheduler().cancelTask(taskId);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        player.teleport(playerBeforeLoc);
+        player.setGameMode(playerBeforeGamemode);
+
+        playersInCam.remove(player.getUniqueId());
+
     }
 
 
