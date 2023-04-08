@@ -26,18 +26,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class CamPath {
 
+
     //Locations
-    private Player player;
     private Location start;
     private Location end;
     private Location step;
-    private Location playerBeforeLoc;
 
     //Integers
     private int durationInTicks;
@@ -47,17 +44,21 @@ public class CamPath {
     //Lists
     private List<Location> pathLocations = new ArrayList<>();
     private List<UUID> playersInCam = new ArrayList<>();
+    private List<UUID> players;
 
-    //Gamemodes
-    private GameMode playerBeforeGamemode;
+    //Before states
+    private Map<UUID, GameMode> playersGamemodesBefore = new HashMap<>();
+    private Map<UUID, Location> playersLocationsBefore = new HashMap<>();
+    private Map<UUID, Boolean> playersFlyingBefore = new HashMap<>();
+
 
 
     //The method gets values given on calling the class and makes the instances
-    public CamPath(Player player, Location start, Location end, int duration) {
-        this.player = player;
+    public CamPath(List<UUID> players, Location start, Location end, int durationInS) {
+        this.players = players;
         this.start = start;
         this.end = end;
-        this.durationInTicks = duration * 20;
+        this.durationInTicks = durationInS * 20;
     }
 
 
@@ -71,7 +72,7 @@ public class CamPath {
         float stepYaw = (end.getYaw() - start.getYaw()) / durationInTicks;
         float stepPitch = (end.getPitch() - start.getPitch()) / durationInTicks;
 
-        step = new Location(player.getWorld(), stepX, stepY, stepZ, stepYaw, stepPitch);
+        step = new Location(Bukkit.getWorld("world"), stepX, stepY, stepZ, stepYaw, stepPitch);
 
 
         //Fills the list with locations (previous location + step location)
@@ -88,9 +89,14 @@ public class CamPath {
             pathLocations.add(nextlocation);
         }
 
-        playerBeforeGamemode = player.getGameMode();
-        playerBeforeLoc = player.getLocation();
-        playersInCam.add(player.getUniqueId());
+        //Storing before variables
+        for (UUID playerUUID : players) {
+            playersGamemodesBefore.put(playerUUID, Bukkit.getPlayer(playerUUID).getGameMode());
+            playersLocationsBefore.put(playerUUID, Bukkit.getPlayer(playerUUID).getLocation());
+            playersFlyingBefore.put(playerUUID, Bukkit.getPlayer(playerUUID).isFlying());
+
+            playersInCam.add(playerUUID);
+        }
 
 
         runPath();
@@ -102,43 +108,56 @@ public class CamPath {
          taskId =  new BukkitRunnable() {
             @Override
             public void run() {
-                //If it's the first iteration of the runnable the player gets teleported to the start and given the first velocity
-                if (tick == 0) {
-                    player.setGameMode(GameMode.SPECTATOR);
-                    player.teleport(start);
-                    Vector velocity = calculateVector(start, pathLocations.get(tick+1));
-                    player.setVelocity(velocity);
+                //Looping through all players and moving them
+                for (UUID playerUUID : players) {
+                    Player player = Bukkit.getPlayer(playerUUID);
+                    //If it's the first iteration of the runnable the player gets teleported to the start and given the first velocity
+                    if (tick == 0) {
+                        player.setGameMode(GameMode.SPECTATOR);
+                        player.teleport(start);
+                        Vector velocity = calculateVector(start, pathLocations.get(tick + 1));
+                        player.setVelocity(velocity);
 
-                //If it's not the first iteration of the runnable we get the current location, at which the player should be after the velocity and teleport them to it.
-                //Then we get the next location and calculate the next velocity and apply it to the player.
-                } else if (tick >= durationInTicks) {
-                    player.teleport(end);
-                    cancel();
-                    stop(player);
-                } else if (tick > 0 && !(tick >= durationInTicks) && !(tick == pathLocations.size()-1)) {
-                    player.teleport(pathLocations.get(tick));
-                    Vector velocity = calculateVector(pathLocations.get(tick), pathLocations.get(tick+1));
-                    player.setVelocity(velocity);
+                        //If it's not the first iteration of the runnable get the current location, at which the player should be after the velocity and teleport them to it.
+                        //Then we get the next location and calculate the next velocity and apply it to the player.
+                        //And if the path is at his end teleport the player to it, cancel the runnable and call stop() method
+                    } else if (tick >= durationInTicks) {
+                        player.teleport(end);
+                        cancel();
+                        stop();
+                    } else if (tick > 0 && !(tick >= durationInTicks) && !(tick == pathLocations.size() - 1)) {
+                        player.teleport(pathLocations.get(tick));
+                        Vector velocity = calculateVector(pathLocations.get(tick), pathLocations.get(tick + 1));
+                        player.setVelocity(velocity);
+                    }
+
                 }
                 //Tick gets set one higher
-                tick ++;
+                tick++;
             }
         }.runTaskTimer(Main.getInstance(), 1, 1).getTaskId();
     }
 
 
     //Stopping everything and putting player back to the state where it started
-    public void stop(Player player) {
+    public void stop() {
+        //I don't know if it needs a try catch but safe is safe right :D
         try {
             Bukkit.getScheduler().cancelTask(taskId);
         }catch (Exception e) {
             e.printStackTrace();
         }
 
-        player.teleport(playerBeforeLoc);
-        player.setGameMode(playerBeforeGamemode);
+        //Reading and setting default variables
+        for (UUID playerUUID : players) {
+            Player target = Bukkit.getPlayer(playerUUID);
 
-        playersInCam.remove(player.getUniqueId());
+            target.setGameMode(playersGamemodesBefore.get(playerUUID));
+            target.teleport(playersLocationsBefore.get(playerUUID));
+            target.setFlying(playersFlyingBefore.get(playerUUID));
+
+            playersInCam.remove(playerUUID);
+        }
 
     }
 
